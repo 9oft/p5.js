@@ -3,7 +3,7 @@ let button;
 let Font1;
 let Font2;
 
-// ---- 생태계(도형) 시스템 전역 변수 ----
+
 let lifeforms = [];
 let prevMouse;
 let stillStartTime = 0;
@@ -55,7 +55,7 @@ function nextState() {
   }
 }
 
-// ------------ 슬라이드별 함수 -----------
+
 function showIntro() {
   background(0);
   textAlign(CENTER, CENTER);
@@ -103,30 +103,6 @@ function showOutro() {
   text("주지현", width / 2, height / 2 + 80);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ------------ state==2에서 실행되는 생태계(도형/흔적/확대) 시스템 -----------
 function showContent() {
   background(0, 0, 100); // HSB 하얀 배경
 
@@ -166,7 +142,7 @@ function showContent() {
   displayCharacter();
 }
 
-// -------------- 생태계 시스템 세부 기능함수 & 클래스 -------------------
+
 function allDeclining() {
   if (lifeforms.length === 0) return false;
   for (let lf of lifeforms) if (!lf.isDeclining) return false;
@@ -231,7 +207,6 @@ function displayInputIfNeeded() {
   }
 }
 
-// 한글 입력 등은 p5.js keyTyped() 이벤트 그대로 유지!
 function keyTyped() {
   if (showInput) {
     if (key === '\n' || keyCode === ENTER) {
