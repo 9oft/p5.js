@@ -21,7 +21,7 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(600, 400);
+  createCanvas(windowWidth, windowHeight);
   prevMouse = createVector(mouseX, mouseY);
   textSize(20);
   textAlign(CENTER, CENTER);
@@ -55,7 +55,6 @@ function nextState() {
   }
 }
 
-// ------------ 슬라이드별 함수 -----------
 function showIntro() {
   background(0);
   textAlign(CENTER, CENTER);
@@ -126,7 +125,6 @@ function showOutro() {
 
 
 
-// ------------ state==2에서 실행되는 생태계(도형/흔적/확대) 시스템 -----------
 function showContent() {
   background(0, 0, 100); // HSB 하얀 배경
 
@@ -231,7 +229,6 @@ function displayInputIfNeeded() {
   }
 }
 
-// 한글 입력 등은 p5.js keyTyped() 이벤트 그대로 유지!
 function keyTyped() {
   if (showInput) {
     if (key === '\n' || keyCode === ENTER) {
