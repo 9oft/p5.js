@@ -334,7 +334,7 @@ function getDensestRegion(traces) {
 function displayCharacter(){
   push();
   translate(mouseX, mouseY);
-  scale(1);
+  scale(0.1);
   translate(-194, -151);
   strokeWeight(19/3); stroke(0);
   line(174,262,176, 297);
