@@ -3,7 +3,6 @@ let button;
 let Font1;
 let Font2;
 
-// ---- 생태계(도형) 시스템 전역 변수 ----
 let lifeforms = [];
 let prevMouse;
 let stillStartTime = 0;
