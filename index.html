@@ -6,9 +6,27 @@
   <!-- p5.js 라이브러리 불러오기 -->
   <script src="https://cdn.jsdelivr.net/npm/p5@1.9.1/lib/p5.min.js"></script>
   <!-- (필요하면 폰트 등 추가 가능) -->
+  <meta charset="UTF-8" />
+  <title>Hand-Driven p5 Sketch</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    
+    video#mpVideo { display: none; }
+  </style>
 </head>
 <body>
   <!-- window.js에서 p5 스케치가 자동 실행됩니다. -->
   <script src="final/window.js"></script>
+    
+  <video id="mpVideo" width="640" height="480" autoplay muted playsinline></video>
+  
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+    
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    
+  <script src="sketch.js"></script>
+  
 </body>
 </html>
