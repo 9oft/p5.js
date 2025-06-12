@@ -533,7 +533,7 @@ function showContent() {
       let lf = lifeforms[i];
       lf.update();
       lf.display(false);
-      if (lf.size < 0.5) {
+      if (lf.size < 0.2) {
         decayedColors.push(color(lf.baseHue, lf.baseSat, lf.baseBri));
         lifeforms.splice(i, 1);
       } else {
