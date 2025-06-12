@@ -577,6 +577,7 @@ function createLifeformIfFingerStill() {
   let current = createVector(tipX, tipY);
   let d = p5.Vector.dist(current, prevTip);
   if (d < 10 && canCreateLife) {
+    console.log("도형 생성 시도", { isStill, canCreateLife, d });
     console.log("손가락이 충분히 가만히 있음", millis() - stillStartTime);
     if (!isStill) {
       stillStartTime = millis();
@@ -606,6 +607,7 @@ function createLifeformIfFingerStill() {
         initSat = selectedBaseSat + random(-15, 15);
         initBri = selectedBaseBri + random(-15, 15);
       }
+      console.log("도형 생성됨", { x: tipX, y: tipY, lifeformCount: lifeforms.length });
       lifeforms.push(new Lifeform(
         tipX, tipY,
         initHue, initSat, initBri
