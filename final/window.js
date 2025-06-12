@@ -306,11 +306,16 @@ function draw() {
     fadeToWhite = true;
   }
 
-  if (fadeToWhite) {
+  // Only show fade-to-white overlay during state 2, and reset after complete
+  if (fadeToWhite && state === 2) {
     fadeAlpha = min(fadeAlpha + 2, 255);
     fill(0, 0, 100, fadeAlpha);
     noStroke();
     rect(0, 0, width, height);
+    if (fadeAlpha >= 255) {
+      fadeToWhite = false;
+      fadeAlpha = 0;
+    }
   }
 }
 
@@ -347,7 +352,6 @@ function onHandResults(results) {
     if (closed === 4) {
       // Only open color selection when not already selecting and no zoom/flash/input in progress, and only if state === 2
       if (
-
         //팔레트 관련하여 문제가 많았어서 계속 조건들 두게 됨.
         state === 2 &&
         !selectingColor &&
@@ -357,6 +361,7 @@ function onHandResults(results) {
         !pendingZoomStart &&
         !showInput &&
         !alreadyZoomed &&
+        !showingGif &&
         !(currentExplanation && millis() - explanationStartTime < (currentExplanation.duration || 7000))
       ) {
         selectingColor = true;
@@ -542,7 +547,7 @@ function showContent() {
     });
   }
 
-  //함수설계도움받음
+  //이 함수설계도움받음
   if (networkMode) {
   stroke(0, 0, 100);
   strokeWeight(1);
@@ -572,6 +577,7 @@ function createLifeformIfFingerStill() {
   let current = createVector(tipX, tipY);
   let d = p5.Vector.dist(current, prevTip);
   if (d < 10 && canCreateLife) {
+    console.log("손가락이 충분히 가만히 있음", millis() - stillStartTime);
     if (!isStill) {
       stillStartTime = millis();
       isStill = true;
@@ -604,6 +610,8 @@ function createLifeformIfFingerStill() {
         tipX, tipY,
         initHue, initSat, initBri
       ));
+      // Immediately display the newly created lifeform so it is visible right away
+      lifeforms[lifeforms.length - 1].display(false);
       stillStartTime = millis();
     }
   } else {
@@ -731,7 +739,7 @@ function keyTyped() {
 // 2번 누르면 lifeform과 trace 크기를 각각 10씩 증가
 function keyPressed() {
   if (key === '1') {
-    // lifeforms 배열을 비우고, 전역 흔적도 초기화
+    // lifeforms 배열을 비우고 전역 흔적도 초기화
     lifeforms = [];
     globalTraces = [];
   } else if (key === '2') {
@@ -1016,7 +1024,6 @@ function displayColorPalette() {
   ellipse(cx, cy, innerRadius * 2);
 }
 
-// Optionally keep mousePressed for fallback, or comment/remove as desired.
 /*
 function mousePressed() {
   for (let rect of paletteRects) {
@@ -1117,15 +1124,13 @@ function drawBlobCharacter(x, y, angle = 0) {
 
   pop();
 }
-// Explanation overlay display function
+// 오버레이 관련 도움 받음
 function displayExplanationOverlay() {
   if (
     currentExplanation
   ) {
-    // Skip drawing if display time has exceeded a short window after duration
     if (millis() - explanationStartTime > (currentExplanation.duration || 7000) + 500) return;
     let alpha = 255;
-    // Draw a top-centered, black overlay fading downward and sideways (optimized gradient)
     let centerX = width / 2;
     let gradientHeight = 400;
     let gradientWidth = 600;
@@ -1155,7 +1160,6 @@ function displayExplanationOverlay() {
       let maxChars = floor(map(elapsed, 0, currentExplanation.duration || 7000, 0, fullText.length * 1.3));
       shownText = fullText.substring(0, maxChars);
     }
-    // Render each line separately to prevent line breaks from shifting previous text upward
     let lines = shownText.split("\n");
     for (let i = 0; i < lines.length; i++) {
       text(lines[i], width/2, 100 + i * 28);
