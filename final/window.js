@@ -609,8 +609,8 @@ function createLifeformIfFingerStill() {
       }
       console.log("도형 생성됨", { x: tipX, y: tipY, lifeformCount: lifeforms.length });
       lifeforms.push(new Lifeform(
-        smoothedPos.x, smoothedPos.y,
-        0, 100, 100 
+         smoothedPos.x, smoothedPos.y,
+         initHue, initSat, initBri
       ));
       // Immediately display the newly created lifeform so it is visible right away
       lifeforms[lifeforms.length - 1].display(false);
