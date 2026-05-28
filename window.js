@@ -65,10 +65,8 @@ let flashStartTime = 0;
 let selectingColor = false;
 let colorOverlayAlpha = 0;
 
-// 🛠️ 수정 포인트 1: 비디오 자동재생 차단으로 인한 무한 대기(Deadlock) 파괴
 function nextState() {
   if (state === 1) {
-    // 브라우저 권한 제한으로 영상이 로드되지 않아도 바로 생태계 씬(Scene)이 열리도록 강제 동기화
     justEnteredState2 = false;
     gifPlayed = true; 
   }
@@ -483,21 +481,28 @@ function showOutro3() {
   image(image3, width/2 + 10, height/2 + 50, 200, 400);
 }
 
+// 🛠️ 핵심 최적화 함수
 function showContent() {
   globalTraces = [];
-  let isFrozen = zoomingIn || zoomingOut || showInput;
+  
+  // 1. 동결 플래그 확장: 플래시가 켜지거나 줌 준비 단계(pending)일 때도 완전히 정지 상태로 간주
+  let isFrozen = zoomingIn || zoomingOut || showInput || flashTriggered || pendingZoomStart;
+  
   if (zoomingIn || zoomingOut) {
     push();
     translate(width/2, height/2);
     scale(zoomFactor);
     translate(-densestPoint.x, -densestPoint.y);
   }
-  canCreateLife = !showInput && !zoomingIn && !zoomingOut && !allDeclining();
+  
+  // 화양연화 시기엔 새 원 생성을 차단
+  canCreateLife = !showInput && !zoomingIn && !zoomingOut && !allDeclining() && !flashTriggered && !pendingZoomStart;
+  
   if (!isFrozen) {
     createLifeformIfFingerStill();
     for (let i = lifeforms.length - 1; i >= 0; i--) {
       let lf = lifeforms[i];
-      lf.update();
+      lf.update(); // 정상 주행 시에만 위치 갱신 및 흔적 추가 연산 가동
       lf.display(false);
       if (lf.size < 0.5) {
         decayedColors.push(color(lf.baseHue, lf.baseSat, lf.baseBri));
@@ -507,8 +512,9 @@ function showContent() {
       }
     }
   } else {
+    // 2. 동결(Freeze) 상태: 생성/복제/이동을 완전히 정지하고, 현재 메모리에 있는 흔적들을 정적으로 화면에 투영만 함.
     lifeforms.forEach(lf => {
-      lf.display(true);
+      lf.display(true); // noBreath = true 전달로 물리 진동까지 일시 정지
       lf.traces.forEach(t => globalTraces.push(t));
     });
   }
@@ -530,20 +536,22 @@ function showContent() {
   }
 
   if (zoomingIn || zoomingOut) pop();
-  triggerZoomIfDenseCellFilled();
+  
+  // 3. 렉 방지의 핵심: 이미 화양연화 챕터가 시작되었다면 무거운 격자 밀도 분석 연산(triggerZoom)을 아예 차단함
+  if (!alreadyZoomed && !zoomingIn && !zoomingOut && !flashTriggered && !pendingZoomStart) {
+    triggerZoomIfDenseCellFilled();
+  }
+  
   updateZoomAnimations();
   displayInputIfNeeded();
 }
 
-// 🛠️ 수정 포인트 2: 물리 완충 모델(smoothedPos) 투영 및 웹캠 Jitter 노이즈 필터링
 function createLifeformIfFingerStill() {
   if (tipX == null) return;
   
-  // 날것의 raw 좌표 대신, updateSpringMotion()에 의해 부드럽게 감쇄된 물리 가상 좌표를 추적 기준으로 정렬
   let current = smoothedPos.copy();
   let d = p5.Vector.dist(current, prevTip);
   
-  // 하드웨어 왜곡과 손 떨림 임계 조건을 10에서 18로 부드럽게 확장하여 생성 타이머의 무한 초기화 방지
   if (d < 18 && canCreateLife) {
     if (!isStill) {
       stillStartTime = millis();
@@ -572,7 +580,6 @@ function createLifeformIfFingerStill() {
         initBri = selectedBaseBri + random(-15, 15);
       }
       
-      // 도형의 탄생 위치 공간 역시 트래킹 흐름과 완벽히 일치하도록 물리 보정 공간(smoothedPos) 좌표로 주입
       lifeforms.push(new Lifeform(
         smoothedPos.x, smoothedPos.y,
         initHue, initSat, initBri
@@ -812,8 +819,6 @@ class Lifeform {
     this.size += this.isDeclining ? -0.15 : 0.05;
     this.directionNoiseOffset += 0.01;
   }
-  
-  // 🛠️ 수정 포인트 3: p5 렌더링 규격 안정화 (ellipse 대신 circle 전용 매칭으로 누락 가능성 차단)
   display(noBreath) {
     let breath = noBreath
       ? 0
@@ -1094,4 +1099,4 @@ function displayExplanationOverlay() {
       text(lines[i], width/2, 100 + i * 28);
     }
   }
-} // 🔗 대가 끊겨 문법 오류를 만들던 파일 맨 끝의 중괄호 적층 문제 완벽 청소 완료!
+}
