@@ -34,34 +34,21 @@ function setup() {
 function draw() {
   background(255);
 
-  if (state === 0) {
-    showIntro();
-  } else if (state === 1) {
-    showIntroDescribe1();
-  } else if (state === 2) {
-    showContent(); // 생태계(도형/확대/흔적 등) 시스템
-  } else if (state === 3) {
-    showIntroDescribe2();
-  } else if (state === 4) {
-    showOutro();
-  }
+  if (state === 0) showIntro();
+  else if (state === 1) showIntroDescribe1();
+  else if (state === 2) showContent(); 
+  else if (state === 3) showIntroDescribe2();
+  else if (state === 4) showOutro();
 }
 
 function nextState() {
-  if (state < 4) {
-    state++;
-  } else {
-    console.log("종료");
-  }
+  if (state < 4) state++;
 }
 
-// ------------ 슬라이드별 함수 -----------
 function showIntro() {
   background(0);
   textAlign(CENTER, CENTER);
-  textSize(40);
-  fill(250);
-  textFont(Font1);
+  textSize(40); fill(250); textFont(Font1);
   text("화양연화", width / 2, height / 2);
   textSize(20);
   text("관계의 가장 아름다운 시절", width / 2, height / 2 + 50);
@@ -69,10 +56,7 @@ function showIntro() {
 
 function showIntroDescribe1() {
   background(0);
-  textFont(Font1);
-  textAlign(LEFT);
-  textSize(25);
-  fill(250);
+  textFont(Font1); textAlign(LEFT); textSize(25); fill(250);
   text("어떤 것에 대해 생각하는 순간 관계 맺음은 시작된다.", 20, height / 2 - 50);
   textSize(20);
   text("생성과 성장, 쇠퇴와 소멸 \n그리고 그 사이의 가장 아름다운 시절들을 그려내며 \n생명력 있어 보이는 것들과의 관계를 다룬 작품입니다.", 20, height / 2 + 70);
@@ -80,22 +64,16 @@ function showIntroDescribe1() {
 
 function showIntroDescribe2() {
   background(0);
-  textFont(Font1);
-  textAlign(CENTER, CENTER);
-  textSize(40);
+  textFont(Font1); textAlign(CENTER, CENTER); textSize(40);
   text("본래 의도", width/2, 60);
-  textAlign(LEFT);
-  textSize(15);
-  fill(250);
+  textAlign(LEFT); textSize(15); fill(250);
   text("주변의 다양한 것들 중 생각이 머문 것은 나의 세상에서 ‘하나의 의미’로 자라난다.\n머문 것과 오래 지낼수록 더 다양한 의미들이 생겨나며, 의미가 생명처럼 형성되고 깊어진다.\n그러다 여러 의미들이 겹쳐지고 섞이면서 강렬한 인상을 남기는 ‘화양연화’의 순간을 맞이한다.", 4, height / 2 + 10);
   text("알게 모르게 찾아온 그 순간은 ‘하나의 뜻’으로 남아 평생토록 간직된다. \n이후 생명(의미)들과의 관계는 쇠퇴해가고, 마침내 소멸하지만 그 자리엔 색(본질)을 남긴다. \n남겨진 색은 나의 세상 어딘가에서, 조용히 하나의 배경으로 작용한다.", 4, height / 2 + 75);
 }
 
 function showOutro() {
   background(0);
-  textAlign(CENTER, CENTER);
-  textSize(40);
-  fill(250);
+  textAlign(CENTER, CENTER); textSize(40); fill(250);
   text("Credit", width / 2, height / 2 - 150);
   textSize(20);
   text("박희연", width / 2, height / 2 - 40);
@@ -103,32 +81,12 @@ function showOutro() {
   text("주지현", width / 2, height / 2 + 80);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ------------ state==2에서 실행되는 생태계(도형/흔적/확대) 시스템 -----------
+// ------------ state==2에서 실행되는 생태계 시스템 -----------
 function showContent() {
-  background(0, 0, 100); // HSB 하얀 배경
+  background(0, 0, 100); 
+
+  // 1. Z-Index 역전: 캐릭터를 제일 먼저 배경에 깔아서, 원이 덮이지 않게 만듦!
+  displayCharacter();
 
   globalTraces = [];
   let isFrozen = (zoomingIn || zoomingOut || showInput);
@@ -163,7 +121,6 @@ function showContent() {
   triggerZoomIfDenseCellFilled();
   updateZoomAnimations();
   displayInputIfNeeded();
-  displayCharacter();
 }
 
 // -------------- 생태계 시스템 세부 기능함수 & 클래스 -------------------
@@ -176,24 +133,101 @@ function allDeclining() {
 function createLifeformIfMouseStill() {
   let currentMouse = createVector(mouseX, mouseY);
   let distance = p5.Vector.dist(currentMouse, prevMouse);
+  
   if (distance < 3 && canCreateLife) {
     if (!isStill) {
       stillStartTime = millis();
       isStill = true;
+      console.log("⏳ 마우스 정지 감지! (1.6초 대기 시작)");
     } else if (millis() - stillStartTime > 1600) {
       lifeforms.push(new Lifeform(mouseX, mouseY));
+      console.log("🔴 도형 생성 완료! 배열 개수:", lifeforms.length);
       stillStartTime = millis();
     }
   } else {
+    if (isStill) {
+      console.log("💨 미세한 움직임 감지! 타이머 초기화");
+    }
     isStill = false;
   }
   prevMouse = currentMouse.copy();
 }
 
+class Lifeform {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    this.base = this.pos.copy();
+    this.traces = [];
+    this.birthTime = millis();
+    this.lastCloneTime = millis();
+    this.lastTraceTime = millis();
+    
+    // 테스트: 캐릭터 밖으로 뚫고 나오게 기본 크기 40픽셀로 극대화
+    this.size = 40; 
+    this.isDeclining = false;
+    
+    // 절대 숨을 수 없는 새빨간색으로 강제 고정 (Hue 0, Sat 100, Bri 100)
+    this.baseHue = 0;
+    this.baseSat = 100;
+    this.baseBri = 100;
+    
+    this.breathPhase = random(TWO_PI);
+    this.traceSize = 5;
+    this.childCount = 0;
+    this.declineTime = random(15000, 16000);
+  }
+  
+  update() {
+    let move = p5.Vector.random2D().mult(random(0.6, 1.8));
+    this.pos.add(move);
+    let maxDist = 50;
+    this.pos.x = constrain(this.pos.x, this.base.x - maxDist, this.base.x + maxDist);
+    this.pos.y = constrain(this.pos.y, this.base.y - maxDist, this.base.y + maxDist);
+
+    if (millis() - this.lastTraceTime > 2000) {
+      let alpha = 180 + random(-40, 40);
+      this.traceSize = map(this.size, 10, 40, 4, 14, true);
+      this.traces.push({
+        x: this.pos.x,
+        y: this.pos.y,
+        col: color(this.baseHue, this.baseSat, this.baseBri, alpha),
+        sz: this.traceSize
+      });
+      this.lastTraceTime = millis();
+    }
+    if (this.traces.length > 3000) this.traces.shift();
+    
+    if (!this.isDeclining && millis() - this.birthTime > this.declineTime) this.isDeclining = true;
+    if (!this.isDeclining && this.childCount < 3 && millis() - this.lastCloneTime > 5000) {
+      lifeforms.push(new Lifeform(this.pos.x, this.pos.y));
+      this.lastCloneTime = millis();
+      this.childCount++;
+    }
+    if (!this.isDeclining) this.size += 0.05;
+    else this.size -= 0.05;
+  }
+  
+  display(noBreath) {
+    let now = millis();
+    let breath = 0;
+    if (!noBreath) {
+      breath = sin(now * 0.0035 + this.breathPhase) * (this.size * 0.06);
+    }
+    
+    fill(this.baseHue, this.baseSat, this.baseBri, 150);
+    noStroke();
+    circle(this.pos.x, this.pos.y, this.size + breath); // circle()로 명확하게 그리기
+    for (let t of this.traces) {
+      fill(t.col);
+      circle(t.x, t.y, t.sz);
+    }
+  }
+}
+
 function triggerZoomIfDenseCellFilled() {
   if (!alreadyZoomed && !zoomingIn && !zoomingOut) {
     let { bestCell, maxCount } = getDensestRegion(globalTraces);
-    if (maxCount >= 1600) { // 셀(280x210)에 흔적 1600개 이상
+    if (maxCount >= 1600) { 
       densestPoint = bestCell;
       targetZoom = min(width / 280, height / 210);
       zoomSpeed = 0.06;
@@ -231,7 +265,6 @@ function displayInputIfNeeded() {
   }
 }
 
-// 한글 입력 등은 p5.js keyTyped() 이벤트 그대로 유지!
 function keyTyped() {
   if (showInput) {
     if (key === '\n' || keyCode === ENTER) {
@@ -241,73 +274,6 @@ function keyTyped() {
       for (let lf of lifeforms) lf.isDeclining = true;
     } else {
       nameInput += key;
-    }
-  }
-}
-
-// 생명체 클래스
-class Lifeform {
-  constructor(x, y) {
-    this.pos = createVector(x, y);
-    this.base = this.pos.copy();
-    this.traces = [];
-    this.birthTime = millis();
-    this.lastCloneTime = millis();
-    this.lastTraceTime = millis();
-    this.size = 10;
-    this.isDeclining = false;
-    this.baseHue = random(190, 230);
-    this.baseSat = random(40, 90);
-    this.baseBri = random(80, 100);
-    this.breathPhase = random(TWO_PI);
-    this.traceSize = 5;
-    this.childCount = 0;
-    this.declineTime = random(15000, 16000);
-  }
-  update() {
-    let move = p5.Vector.random2D().mult(random(0.6, 1.8));
-    this.pos.add(move);
-    let maxDist = 50;
-    this.pos.x = constrain(this.pos.x, this.base.x - maxDist, this.base.x + maxDist);
-    this.pos.y = constrain(this.pos.y, this.base.y - maxDist, this.base.y + maxDist);
-
-    if (millis() - this.lastTraceTime > 2000) {
-      let hue = this.baseHue + random(-10, 15);
-      let sat = this.baseSat + random(-8, 10);
-      let bri = this.baseBri + random(-15, 10);
-      let alpha = 180 + random(-40, 40);
-      this.traceSize = map(this.size, 10, 40, 4, 14, true);
-      this.traces.push({
-        x: this.pos.x,
-        y: this.pos.y,
-        col: color(hue, sat, bri, alpha),
-        sz: this.traceSize
-      });
-      this.lastTraceTime = millis();
-    }
-    if (this.traces.length > 3000) this.traces.shift();
-    
-    if (!this.isDeclining && millis() - this.birthTime > this.declineTime) this.isDeclining = true;
-    if (!this.isDeclining && this.childCount < 3 && millis() - this.lastCloneTime > 5000) {
-      lifeforms.push(new Lifeform(this.pos.x, this.pos.y));
-      this.lastCloneTime = millis();
-      this.childCount++;
-    }
-    if (!this.isDeclining) this.size += 0.05;
-    else this.size -= 0.05;
-  }
-  display(noBreath) {
-    let now = millis();
-    let breath = 0;
-    if (!noBreath) {
-      breath = sin(now * 0.0035 + this.breathPhase) * (this.size * 0.06);
-    }
-    fill(this.baseHue, this.baseSat, this.baseBri, 150);
-    noStroke();
-    ellipse(this.pos.x, this.pos.y, this.size + breath, this.size + breath);
-    for (let t of this.traces) {
-      fill(t.col);
-      ellipse(t.x, t.y, t.sz, t.sz);
     }
   }
 }
