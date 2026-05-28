@@ -292,14 +292,15 @@ function draw() {
     fadeToWhite = true;
   }
 
+  // 🛠️ 수정 포인트: 투명도가 255에 도달하면 리셋하지 않고 noLoop()로 화면을 완전히 정지시킴
   if (fadeToWhite && state === 2) {
     fadeAlpha = min(fadeAlpha + 2, 255);
     fill(0, 0, 100, fadeAlpha);
     noStroke();
     rect(0, 0, width, height);
+    
     if (fadeAlpha >= 255) {
-      fadeToWhite = false;
-      fadeAlpha = 0;
+      noLoop(); // ◀ 영화 엔딩처럼 순백의 화면 상태로 브라우저 렌더링을 완전히 고정시킵니다.
     }
   }
 }
@@ -481,11 +482,8 @@ function showOutro3() {
   image(image3, width/2 + 10, height/2 + 50, 200, 400);
 }
 
-// 🛠️ 핵심 최적화 함수
 function showContent() {
   globalTraces = [];
-  
-  // 1. 동결 플래그 확장: 플래시가 켜지거나 줌 준비 단계(pending)일 때도 완전히 정지 상태로 간주
   let isFrozen = zoomingIn || zoomingOut || showInput || flashTriggered || pendingZoomStart;
   
   if (zoomingIn || zoomingOut) {
@@ -495,14 +493,13 @@ function showContent() {
     translate(-densestPoint.x, -densestPoint.y);
   }
   
-  // 화양연화 시기엔 새 원 생성을 차단
   canCreateLife = !showInput && !zoomingIn && !zoomingOut && !allDeclining() && !flashTriggered && !pendingZoomStart;
   
   if (!isFrozen) {
     createLifeformIfFingerStill();
     for (let i = lifeforms.length - 1; i >= 0; i--) {
       let lf = lifeforms[i];
-      lf.update(); // 정상 주행 시에만 위치 갱신 및 흔적 추가 연산 가동
+      lf.update(); 
       lf.display(false);
       if (lf.size < 0.5) {
         decayedColors.push(color(lf.baseHue, lf.baseSat, lf.baseBri));
@@ -512,9 +509,8 @@ function showContent() {
       }
     }
   } else {
-    // 2. 동결(Freeze) 상태: 생성/복제/이동을 완전히 정지하고, 현재 메모리에 있는 흔적들을 정적으로 화면에 투영만 함.
     lifeforms.forEach(lf => {
-      lf.display(true); // noBreath = true 전달로 물리 진동까지 일시 정지
+      lf.display(true); 
       lf.traces.forEach(t => globalTraces.push(t));
     });
   }
@@ -537,7 +533,6 @@ function showContent() {
 
   if (zoomingIn || zoomingOut) pop();
   
-  // 3. 렉 방지의 핵심: 이미 화양연화 챕터가 시작되었다면 무거운 격자 밀도 분석 연산(triggerZoom)을 아예 차단함
   if (!alreadyZoomed && !zoomingIn && !zoomingOut && !flashTriggered && !pendingZoomStart) {
     triggerZoomIfDenseCellFilled();
   }
