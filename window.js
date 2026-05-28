@@ -176,7 +176,7 @@ function allDeclining() {
 function createLifeformIfMouseStill() {
   let currentMouse = createVector(mouseX, mouseY);
   let distance = p5.Vector.dist(currentMouse, prevMouse);
-  if (distance < 1 && canCreateLife) {
+  if (distance < 3 && canCreateLife) {
     if (!isStill) {
       stillStartTime = millis();
       isStill = true;
