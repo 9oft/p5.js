@@ -870,7 +870,7 @@ class Lifeform {
 
     fill(this.baseHue, this.baseSat, this.baseBri, 150);
     noStroke();
-    ellipse(this.pos.x, this.pos.y, this.size + breath);
+    ellipse(this.pos.x, this.pos.y, this.size + breath, this.size + breath);
     // Draw gradient sphere instead of solid ellipse
     // Smooth trace size adjustments
     this.traces.forEach(t => {
@@ -883,7 +883,7 @@ class Lifeform {
 
     this.traces.forEach(t => {
       fill(t.col);
-      ellipse(t.x, t.y, t.sz);
+      ellipse(t.x, t.y, t.sz, t.sz);
     });
   }
 }
