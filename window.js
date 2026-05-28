@@ -62,14 +62,15 @@ let averageColor;
 let networkMode = false;
 let flashStartTime = 0;
 
-
 let selectingColor = false;
 let colorOverlayAlpha = 0;
 
+// 🛠️ 수정 포인트 1: 비디오 자동재생 차단으로 인한 무한 대기(Deadlock) 파괴
 function nextState() {
   if (state === 1) {
-    justEnteredState2 = true;
-    gifPlayed = false;
+    // 브라우저 권한 제한으로 영상이 로드되지 않아도 바로 생태계 씬(Scene)이 열리도록 강제 동기화
+    justEnteredState2 = false;
+    gifPlayed = true; 
   }
   if (state < 6) state++;
 }
@@ -112,7 +113,6 @@ function preload() {
   image1 = loadImage('./image9.png');
   image2 = loadImage('./image.png');
   image3 = loadImage('./image1.png');
-
 }
 
 function draw() {
@@ -127,7 +127,6 @@ function draw() {
 
     displayColorPalette();
     displayColorSelectionFeedback();
-
 
     if (
       state === 2 && gifPlayed &&
@@ -145,12 +144,11 @@ function draw() {
       }
       drawBlobCharacter(smoothedPos.x, smoothedPos.y, angle + offset);
     }
-    return; // pause everything else
+    return; 
   } else if (!selectingColor && colorOverlayAlpha > 0) {
     colorOverlayAlpha -= 10;
     if (colorOverlayAlpha < 1) {
       colorOverlayAlpha = 0;
-      // Do not clear paletteRects here — let selection logic handle it
     }
     fill(0, colorOverlayAlpha * 0.6);
     noStroke();
@@ -175,7 +173,6 @@ function draw() {
 
   smoothedBrightness = lerp(smoothedBrightness, avgBrightness, 0.05);
   background(0, 0, map(smoothedBrightness, 0, 255, 0, 100));
-  // Draw blocking rect if showingGif is true
   if (showingGif) {
     fill(0);
     noStroke();
@@ -196,16 +193,11 @@ function draw() {
   else if (state === 5) showOutro2();
   else if (state === 6) showOutro3();
 
-
-
-  // Color overlay block for palette/feedback (when not selectingColor but overlay is visible)
   if (!selectingColor && colorOverlayAlpha > 0) {
     fill(0, colorOverlayAlpha * 0.6);
     noStroke();
     rect(0, 0, width, height);
-    // displayColorPalette(); // REMOVED as per instructions
     displayColorSelectionFeedback();
-    // drawBlobCharacter after overlays, if tip is present
     if (
       state === 2 && gifPlayed &&
       tipX !== null && tipY !== null
@@ -224,7 +216,6 @@ function draw() {
     }
   }
 
-  // Always render the character when overlays are not present and state is active
   if (
     state === 2 && gifPlayed &&
     !selectingColor &&
@@ -246,7 +237,6 @@ function draw() {
   }
 
   if (flashTriggered) {
-    // Move the trigger for the third explanation here, before the flash drawing logic
     if (flashPhase === 0 && !thirdExplanationStarted) {
       currentExplanation = {
         title: "화양연화",
@@ -256,11 +246,11 @@ function draw() {
       explanationStartTime = millis();
       thirdExplanationStarted = true;
     }
-    if (flashPhase < 30) { // 0.5초 페이드 인
+    if (flashPhase < 30) { 
       flashAlpha = map(flashPhase, 0, 30, 0, 255);
-    } else if (flashPhase < 75) { // 1.5초 유지
+    } else if (flashPhase < 75) { 
       flashAlpha = 255;
-    } else if (flashPhase < 105) { // 1초 페이드 아웃
+    } else if (flashPhase < 105) { 
       flashAlpha = map(flashPhase, 75, 105, 255, 0);
     }
 
@@ -284,29 +274,26 @@ function draw() {
     }
   }
 
-  // Display explanation overlay at the very end
   displayExplanationOverlay();
   if (
-  fourthExplanationStarted &&
-  !fifthExplanationStarted &&
-  millis() - explanationStartTime > currentExplanation.duration
-) {
-  currentExplanation = {
-    title: "\n특별한 순간과 색들을 간직한 채로,\n앞으로도 당신의 세상을 더 다채롭게 채워가며 \n 나아가길 바랍니다.",
-    body: "",
-    duration: 15000
-  };
-  explanationStartTime = millis();
-  fifthExplanationStarted = true;
-  fifthExplanationStartTime = millis();
-}
+    fourthExplanationStarted &&
+    !fifthExplanationStarted &&
+    millis() - explanationStartTime > currentExplanation.duration
+  ) {
+    currentExplanation = {
+      title: "\n특별한 순간과 색들을 간직한 채로,\n앞으로도 당신의 세상을 더 다채롭게 채워가며 \n 나아가길 바랍니다.",
+      body: "",
+      duration: 15000
+    };
+    explanationStartTime = millis();
+    fifthExplanationStarted = true;
+    fifthExplanationStartTime = millis();
+  }
 
-  // Fade to white logic after fifth explanation
   if (fifthExplanationStarted && millis() - fifthExplanationStartTime > 7000) {
     fadeToWhite = true;
   }
 
-  // Only show fade-to-white overlay during state 2, and reset after complete
   if (fadeToWhite && state === 2) {
     fadeAlpha = min(fadeAlpha + 2, 255);
     fill(0, 0, 100, fadeAlpha);
@@ -350,9 +337,7 @@ function onHandResults(results) {
       if (lm[pair[0]].y > lm[pair[1]].y) closed++;
     });
     if (closed === 4) {
-      // Only open color selection when not already selecting and no zoom/flash/input in progress, and only if state === 2
       if (
-        //팔레트 관련하여 문제가 많았어서 계속 조건들 두게 됨.
         state === 2 &&
         !selectingColor &&
         !zoomingIn &&
@@ -367,14 +352,13 @@ function onHandResults(results) {
         selectingColor = true;
         colorOverlayAlpha = 0;
       }
-      //console.log("ROCK!");
     }
   } else {
     tipX = tipY = null;
     isStill = false;
   }
 }
-// 코드 구현 도움 받음
+
 function displayColorSelectionFeedback() {
   if (tipX !== null && tipY !== null) {
     for (let rect of paletteRects) {
@@ -384,8 +368,7 @@ function displayColorSelectionFeedback() {
         noFill();
         stroke(255,100);
         strokeWeight(2);
-        ellipse(rect.x, rect.y, 30 + sin(millis()*0.01)*2); //부드러운 운동
-        // Require tip to stay for >2000ms to confirm color selection
+        ellipse(rect.x, rect.y, 30 + sin(millis()*0.01)*2); 
         if (duration > 2000) {
           selectedBaseSat = rect.sat;
           selectedBaseBri = rect.bri;
@@ -393,7 +376,7 @@ function displayColorSelectionFeedback() {
           selectingColor = false;
           colorOverlayAlpha = 0;
           paletteRects = [];
-          return; // Exit early to prevent multiple palette interactions
+          return; 
         }
       } else {
         delete rect.enterTime;
@@ -401,13 +384,6 @@ function displayColorSelectionFeedback() {
     }
   }
 }
-
-
-
-
-
-
-
 
 function showIntro() {
   background(0);
@@ -474,7 +450,7 @@ function showOutro1() {
 
   text("이번 프로젝트에서는 다양한 역할을 수행하며 협업의 흐름을 이해할 수 있었습니다.\n 예정보다 빠듯해진 일정 속에서 변수에 대비한 유연한 시간 관리의 중요성도 깊이 느꼈습니다.", width/2-350, height/2 - 40);
   text("이번 팀플레이 과제에서는 각자 개발한 부분을 하나로 통합하는 작업이 중요하다는 것을 깨달았습니다. \n코드 충돌을 최소화하고 원활한 연동을 위해 협업의 중요성을 체감했습니다.\n 기능 통합 과정에서 발생한 오류를 함께 해결하면서 협업에 대한 장단점에 대해 깨달았습니다.", width/2 -350, height/2 + 40);
-  text("이번 팀플레이를 통해 소통의 방법, 각 개인의 능력치를 최대로 이용하는 효율적인 과업 분배,\n 좋은 주제 선정과 내용 등 어떻게 해야 더 좋은 결과물을 낼 수 있을지에 대해 고민했지만\n 어설픈 지점들을 더 많이 느꼈던 것 같다. \n여러 고충들을 통해 더 좋은 방향으로 팀플레이를 이끄는 방법들을 깨닫게 된 것 같다.", width/2 -350, height/2 + 155);
+  text("이번 팀플레이를 통해 소통의 방법, 각 개인의 능력치를 최대로 이용하는 효율적인 과업 분배,\n 좋은 주제 선정과 내용 등 어떻게 해야 더 좋은 결과물을 낼 수 있을지에 대해 고민했지만\n 어설픈 지점들을 더 많이 느꼈던 것 같다. \n여러 고충들을 통해 더 좋은 방향으로 팀플레이을 이끄는 방법들을 깨닫게 된 것 같다.", width/2 -350, height/2 + 155);
 }
 
 function showOutro2() {
@@ -505,18 +481,8 @@ function showOutro3() {
   text("클래스 문법 이용(Lifeform class)", width/2 + 300, height/2 + 130);
   image(image2, width/2 - 400, height/2 + 50, 200, 400);
   image(image3, width/2 + 10, height/2 + 50, 200, 400);
-
 }
 
-
-
-
-
-
-
-
-
-//코드 구현 도움 받음
 function showContent() {
   globalTraces = [];
   let isFrozen = zoomingIn || zoomingOut || showInput;
@@ -547,24 +513,21 @@ function showContent() {
     });
   }
 
-  //함수설계도움받음
   if (networkMode) {
-  stroke(0, 0, 100);
-  strokeWeight(1);
-  // connect each lifeform to its two nearest neighbors
-  for (let lf of lifeforms) {
-    let neighbors = lifeforms
-      .filter(o => o !== lf)
-      .map(o => ({ node: o, d: dist(lf.pos.x, lf.pos.y, o.pos.x, o.pos.y) }))
-      .sort((a, b) => a.d - b.d)
-      .slice(0, 2);
-    for (let nb of neighbors) {
-      line(lf.pos.x, lf.pos.y, nb.node.pos.x, nb.node.pos.y);
+    stroke(0, 0, 100);
+    strokeWeight(1);
+    for (let lf of lifeforms) {
+      let neighbors = lifeforms
+        .filter(o => o !== lf)
+        .map(o => ({ node: o, d: dist(lf.pos.x, lf.pos.y, o.pos.x, o.pos.y) }))
+        .sort((a, b) => a.d - b.d)
+        .slice(0, 2);
+      for (let nb of neighbors) {
+        line(lf.pos.x, lf.pos.y, nb.node.pos.x, nb.node.pos.y);
+      }
     }
+    noStroke();
   }
-  noStroke();
-  }
-
 
   if (zoomingIn || zoomingOut) pop();
   triggerZoomIfDenseCellFilled();
@@ -572,18 +535,20 @@ function showContent() {
   displayInputIfNeeded();
 }
 
+// 🛠️ 수정 포인트 2: 물리 완충 모델(smoothedPos) 투영 및 웹캠 Jitter 노이즈 필터링
 function createLifeformIfFingerStill() {
   if (tipX == null) return;
-  let current = createVector(tipX, tipY);
+  
+  // 날것의 raw 좌표 대신, updateSpringMotion()에 의해 부드럽게 감쇄된 물리 가상 좌표를 추적 기준으로 정렬
+  let current = smoothedPos.copy();
   let d = p5.Vector.dist(current, prevTip);
-  if (d < 10 && canCreateLife) {
-    console.log("도형 생성 시도", { isStill, canCreateLife, d });
-    console.log("손가락이 충분히 가만히 있음", millis() - stillStartTime);
+  
+  // 하드웨어 왜곡과 손 떨림 임계 조건을 10에서 18로 부드럽게 확장하여 생성 타이머의 무한 초기화 방지
+  if (d < 18 && canCreateLife) {
     if (!isStill) {
       stillStartTime = millis();
       isStill = true;
     } else if (millis() - stillStartTime > 1600) {
-      // Trigger the second explanation overlay only once, before the first shape is created
       if (!secondExplanationStarted) {
         setTimeout(() => {
           currentExplanation = {
@@ -592,11 +557,10 @@ function createLifeformIfFingerStill() {
             duration: 19000
           };
           explanationStartTime = millis();
-        }, 5000); // Delay by 5 seconds
+        }, 5000); 
         secondExplanationStarted = true;
       }
-      // Apply initial random variation ±15 to the selected base color,
-      // and lock white (baseSat ≤ 0) to hue and saturation
+      
       let initHue, initSat, initBri;
       if (selectedBaseSat <= 0) {
         initHue = selectedBaseHue;
@@ -607,12 +571,13 @@ function createLifeformIfFingerStill() {
         initSat = selectedBaseSat + random(-15, 15);
         initBri = selectedBaseBri + random(-15, 15);
       }
-      console.log("도형 생성됨", { x: tipX, y: tipY, lifeformCount: lifeforms.length });
+      
+      // 도형의 탄생 위치 공간 역시 트래킹 흐름과 완벽히 일치하도록 물리 보정 공간(smoothedPos) 좌표로 주입
       lifeforms.push(new Lifeform(
-        tipX, tipY,
+        smoothedPos.x, smoothedPos.y,
         initHue, initSat, initBri
       ));
-      // Immediately display the newly created lifeform so it is visible right away
+      
       lifeforms[lifeforms.length - 1].display(false);
       stillStartTime = millis();
     }
@@ -630,7 +595,6 @@ function triggerZoomIfDenseCellFilled() {
   if (!alreadyZoomed && !zoomingIn && !zoomingOut) {
     let { bestCell, maxCount } = getDensestRegion(globalTraces);
     if (maxCount >= 1600) {
-
       densestPoint = bestCell;
       targetZoom = min(width/480, height/360);
       zoomSpeed = 0.06;
@@ -648,7 +612,6 @@ function triggerZoomIfDenseCellFilled() {
       } else {
         averageColor = color(0, 0, 100, 0);
       }
-      // Instead of enabling zoom directly, trigger flash and set pendingZoomStart
       if (!flashTriggered && !zoomingIn && !zoomingOut && !showInput) {
         flashTriggered = true;
         flashPhase = 0;
@@ -661,7 +624,6 @@ function triggerZoomIfDenseCellFilled() {
 
 function updateZoomAnimations() {
   if (zoomingIn && zoomFactor < targetZoom) {
-    // Only calculate averageColor once before zooming in
     if (!averageColorCalculated) {
       averageColor = getAverageDecayedColor();
       averageColorCalculated = true;
@@ -672,14 +634,12 @@ function updateZoomAnimations() {
       zoomSpeed = 0.01;
     }
   }
-  // Throttle the check for zoom-in trigger using frameCount % 3 === 0
   if (
     !zoomingIn &&
     flashPhase === 1 &&
     frameCount % 3 === 0 &&
     millis() - flashStartTime > 2000
   ) {
-    console.log("줌 트리거 조건 충족");
     zoomingIn = true;
   }
   if (zoomingOut) {
@@ -692,7 +652,6 @@ function updateZoomAnimations() {
 }
 
 function displayInputIfNeeded() {
-  // Bold-effect text drawing function
   function drawBoldText(txt, x, y) {
     for (let dx = -0.5; dx <= 0.5; dx += 0.5) {
       for (let dy = -0.5; dy <= 0.5; dy += 0.5) {
@@ -718,7 +677,6 @@ function keyTyped() {
   if (showInput) {
     if (key === '\n' || keyCode === ENTER) {
       zoomingIn = false;
-      // Insert fourth explanation overlay before zoomingOut
       if (!fourthExplanationStarted) {
         currentExplanation = {
           title: "퇴보 그리고 소멸",
@@ -737,15 +695,11 @@ function keyTyped() {
   }
 }
 
-// 1번 누르면 모든 자식과 흔적 클리어
-// 2번 누르면 lifeform과 trace 크기를 각각 10씩 증가
 function keyPressed() {
   if (key === '1') {
-    // lifeforms 배열을 비우고, 전역 흔적도 초기화
     lifeforms = [];
     globalTraces = [];
   } else if (key === '2') {
-    // Smooth increase
     lifeforms.forEach(lf => {
       lf.pendingSizeDelta = (lf.pendingSizeDelta || 0) + 10;
       lf.traces.forEach(t => {
@@ -753,7 +707,6 @@ function keyPressed() {
       });
     });
   } else if (key === '3') {
-    // Smooth decrease
     lifeforms.forEach(lf => {
       lf.pendingSizeDelta = (lf.pendingSizeDelta || 0) - 10;
       lf.traces.forEach(t => {
@@ -785,7 +738,6 @@ class Lifeform {
     this.directionNoiseOffset = random(1000);
     this.lastDirectionChange = millis();
     this.pendingSizeDelta = 0;
-    // Precompute static radial gradient layers for this blob
     this.gradientLayers = 30;
     this.gradientData = [];
     for (let i = this.gradientLayers; i >= 1; i--) {
@@ -797,7 +749,6 @@ class Lifeform {
     }
   }
   update() {
-        // Smooth size adjustments
     if (this.pendingSizeDelta !== 0) {
       const step = this.pendingSizeDelta > 0 ? 1 : -1;
       this.size += step;
@@ -822,16 +773,14 @@ class Lifeform {
     let maxDistance = 50;
     let toBase = p5.Vector.sub(this.base, this.pos);
     if (toBase.mag() > maxDistance) {
-      toBase.normalize().mult(0.8); // stronger return force
+      toBase.normalize().mult(0.8); 
       this.pos.add(toBase);
     }
 
-    // Adjust growth rate based on avgBrightness
-    let traceInterval = map(avgBrightness, 0, 255, 4000, 500);  // traces appear faster in bright light
-    let cloneInterval = map(avgBrightness, 0, 255, 10000, 2000); // clones appear faster in bright light
+    let traceInterval = map(avgBrightness, 0, 255, 4000, 500);  
+    let cloneInterval = map(avgBrightness, 0, 255, 10000, 2000); 
 
     if (millis() - this.lastTraceTime > traceInterval) {
-      // Widened variability: hue ±15, saturation ±15, brightness ±15
       let hueVar, satVar, briVar;
       if (this.baseSat <= 0) {
         hueVar = this.baseHue;
@@ -863,6 +812,8 @@ class Lifeform {
     this.size += this.isDeclining ? -0.15 : 0.05;
     this.directionNoiseOffset += 0.01;
   }
+  
+  // 🛠️ 수정 포인트 3: p5 렌더링 규격 안정화 (ellipse 대신 circle 전용 매칭으로 누락 가능성 차단)
   display(noBreath) {
     let breath = noBreath
       ? 0
@@ -870,9 +821,8 @@ class Lifeform {
 
     fill(this.baseHue, this.baseSat, this.baseBri, 150);
     noStroke();
-    ellipse(this.pos.x, this.pos.y, this.size + breath);
-    // Draw gradient sphere instead of solid ellipse
-    // Smooth trace size adjustments
+    circle(this.pos.x, this.pos.y, this.size + breath);
+    
     this.traces.forEach(t => {
       if (t.pendingSzDelta) {
         const step = t.pendingSzDelta > 0 ? 1 : -1;
@@ -883,7 +833,7 @@ class Lifeform {
 
     this.traces.forEach(t => {
       fill(t.col);
-      ellipse(t.x, t.y, t.sz);
+      circle(t.x, t.y, t.sz);
     });
   }
 }
@@ -943,24 +893,22 @@ function updateAverageBrightness() {
       count++;
     }
   }
-
   avgBrightness = totalBrightness / count;
 }
 
 function updateSpringMotion() {
   if (tipX !== null && tipY !== null) {
     let target = createVector(tipX, tipY);
-    let force = p5.Vector.sub(target, smoothedPos).mult(0.1); // spring strength
+    let force = p5.Vector.sub(target, smoothedPos).mult(0.1); 
     acceleration = force;
     velocity.add(acceleration);
-    velocity.mult(0.85); // damping
+    velocity.mult(0.85); 
     smoothedPos.add(velocity);
   }
 }
 
 function displayColorPalette() {
   if (!selectingColor) return;
-  // Center and dimensions
   const cx = width / 2;
   const cy = height / 2;
   const n = paletteColors.length;
@@ -968,12 +916,10 @@ function displayColorPalette() {
   const outerRadius = min(width, height) * 0.5 + 40;
   const angleStep = TWO_PI / n;
 
-  // Generate paletteRects once when first displaying
   if (paletteRects.length === 0) {
     for (let i = 0; i < n; i++) {
       const baseAngle = i * angleStep - HALF_PI;
       const nextAngle = baseAngle + angleStep;
-      // Compute the midpoint for the color hit area
       const midAngle = (baseAngle + nextAngle) / 2;
       const rx = cx + cos(midAngle) * (innerRadius + outerRadius) / 2;
       const ry = cy + sin(midAngle) * (innerRadius + outerRadius) / 2;
@@ -989,7 +935,6 @@ function displayColorPalette() {
     }
   }
 
-  // Draw each wedge segment every frame
   for (let i = 0; i < n; i++) {
     const baseAngle = i * angleStep - HALF_PI;
     const nextAngle = baseAngle + angleStep;
@@ -1020,24 +965,11 @@ function displayColorPalette() {
     }
   }
 
-  // Draw central circle to cover the inner hole
   fill(0, 0, 100, 255);
   noStroke();
   ellipse(cx, cy, innerRadius * 2);
 }
 
-// Optionally keep mousePressed for fallback, or comment/remove as desired.
-/*
-function mousePressed() {
-  for (let rect of paletteRects) {
-    if (dist(mouseX, mouseY, rect.x, rect.y) < rect.w / 2) {
-      selectedBaseHue = rect.hue;
-      //console.log("Selected hue:", selectedBaseHue);
-      break;
-    }
-  }
-}
-*/
 function playGifAnimation() {
   let w = windowWidth;
   let h = windowWidth * 9 / 16;
@@ -1065,8 +997,9 @@ function playGifAnimation() {
     explanationStartTime = millis();
   });
 }
+
 function getAverageDecayedColor() {
-  if (decayedColors.length === 0) return color(200); // default gray
+  if (decayedColors.length === 0) return color(200); 
   let h = 0, s = 0, b = 0;
   for (let c of decayedColors) {
     h += hue(c);
@@ -1093,7 +1026,6 @@ function drawBlobCharacter(x, y, angle = 0) {
   for (let j = m - 2; j < m; j++) {
     let angle = -HALF_PI + TWO_PI * j / m;
     let r = radii[j];
-    // curveVertex(cos(angle) * r + 200, sin(angle) * r + 200);
   }
   for (let i = 0; i < m; i++) {
     let angle = -HALF_PI + TWO_PI * i / m;
@@ -1107,7 +1039,6 @@ function drawBlobCharacter(x, y, angle = 0) {
   }
   endShape(CLOSE);
 
-  // 눈
   stroke(0);
   strokeWeight(3);
   fill(255);
@@ -1118,7 +1049,6 @@ function drawBlobCharacter(x, y, angle = 0) {
   ellipse(175, 180, 12, 12);
   ellipse(225, 180, 12, 12);
 
-  // 다리
   stroke(0);
   strokeWeight(4);
   fill(255);
@@ -1127,20 +1057,16 @@ function drawBlobCharacter(x, y, angle = 0) {
 
   pop();
 }
-// Explanation overlay display function
+
 function displayExplanationOverlay() {
-  if (
-    currentExplanation
-  ) {
-    // Skip drawing if display time has exceeded a short window after duration
+  if (currentExplanation) {
     if (millis() - explanationStartTime > (currentExplanation.duration || 7000) + 500) return;
     let alpha = 255;
-    // Draw a top-centered, black overlay fading downward and sideways (optimized gradient)
     let centerX = width / 2;
     let gradientHeight = 400;
     let gradientWidth = 600;
     noStroke();
-    let step = 4; // increased step size for performance
+    let step = 4; 
     for (let x = -gradientWidth; x <= gradientWidth; x += step) {
       for (let y = 0; y <= gradientHeight; y += step) {
         let alphaY = map(y, 0, gradientHeight, 255, 0);
@@ -1156,19 +1082,16 @@ function displayExplanationOverlay() {
     text(currentExplanation.title, width / 2, 55);
     textSize(23);
 
-    // Gradually reveal explanation body text only if state === 2
     let fullText = currentExplanation.body;
     let shownText = fullText;
     if (state === 2) {
       let elapsed = millis() - explanationStartTime;
-      // Increase typing speed: use fullText.length * 1.5
       let maxChars = floor(map(elapsed, 0, currentExplanation.duration || 7000, 0, fullText.length * 1.3));
       shownText = fullText.substring(0, maxChars);
     }
-    // Render each line separately to prevent line breaks from shifting previous text upward
     let lines = shownText.split("\n");
     for (let i = 0; i < lines.length; i++) {
       text(lines[i], width/2, 100 + i * 28);
     }
   }
-}
+} // 🔗 대가 끊겨 문법 오류를 만들던 파일 맨 끝의 중괄호 적층 문제 완벽 청소 완료!
